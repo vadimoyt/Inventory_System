@@ -1,2 +1,7 @@
 .venv
 .idea
+.env
+__pycache__
+alembic.ini
+env.py
+script.py.mako
