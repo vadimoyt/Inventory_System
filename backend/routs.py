@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, Form, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-from backend.models import Manufacturer, Counterparty, Agreement
+from backend.models import Manufacturer, Counterparty, Agreement, Product
 from backend.database import get_db
 
 app = FastAPI()
@@ -187,3 +187,96 @@ async def delete_agreement(agreement_id: int, db: Session = Depends(get_db)):
     db.delete(agreement)
     db.commit()
     return RedirectResponse(url="/agreement", status_code=303)
+
+
+@app.get("/product")
+async def get_products(request: Request, db: Session = Depends(get_db)):
+    products = db.query(Product).all()
+    return templates.TemplateResponse("products.html", {"request": request, "products": products})
+
+
+@app.get("/product/create")
+async def create_product(request: Request, db: Session = Depends(get_db)):
+    manufacturers = db.query(Manufacturer).all()
+    counterparties = db.query(Counterparty).all()
+    agreements = db.query(Agreement).all()
+    return templates.TemplateResponse("create_product.html", {
+        "request": request,
+        "manufacturers": manufacturers,
+        "counterparties": counterparties,
+        "agreements": agreements
+    })
+
+
+@app.post("/product/create")
+async def create_product_post(
+    name: str = Form(...),
+    price: float = Form(...),
+    manufacturer_id: int = Form(...),
+    counterparty_id: int = Form(...),
+    agreement_id: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    new_product = Product(
+        name=name,
+        price=price,
+        manufacturer_id=manufacturer_id,
+        counterparty_id=counterparty_id,
+        agreement_id=agreement_id
+    )
+    db.add(new_product)
+    db.commit()
+    return RedirectResponse(url="/product", status_code=303)
+
+
+@app.get("/product/edit/{product_id}")
+async def edit_product(request: Request, product_id: int, db: Session = Depends(get_db)):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Товар не найден")
+
+    manufacturers = db.query(Manufacturer).all()
+    counterparties = db.query(Counterparty).all()
+    agreements = db.query(Agreement).all()
+
+    return templates.TemplateResponse("edit_product.html", {
+        "request": request,
+        "product": product,
+        "manufacturers": manufacturers,
+        "counterparties": counterparties,
+        "agreements": agreements
+    })
+
+
+@app.post("/product/edit/{product_id}")
+async def edit_product_post(
+    product_id: int,
+    name: str = Form(...),
+    price: float = Form(...),
+    manufacturer_id: int = Form(...),
+    counterparty_id: int = Form(...),
+    agreement_id: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Товар не найден")
+
+    product.name = name
+    product.price = price
+    product.manufacturer_id = manufacturer_id
+    product.counterparty_id = counterparty_id
+    product.agreement_id = agreement_id
+    db.commit()
+    return RedirectResponse(url="/product", status_code=303)
+
+
+@app.get("/product/delete/{product_id}")
+async def delete_product(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Товар не найден")
+
+    db.delete(product)
+    db.commit()
+    return RedirectResponse(url="/product", status_code=303)

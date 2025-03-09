@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Создать товар</title>
+</head>
+<body>
+    <h1>Создать новый товар</h1>
+    <form method="post">
+        <label for="name">Название:</label>
+        <input type="text" name="name" required><br>
+
+        <label for="price">Цена:</label>
+        <input type="number" name="price" step="0.01" required><br>
+
+        <label for="manufacturer_id">Производитель:</label>
+        <select name="manufacturer_id" required>
+            {% for manufacturer in manufacturers %}
+            <option value="{{ manufacturer.id }}">{{ manufacturer.name }}</option>
+            {% endfor %}
+        </select><br>
+
+        <label for="counterparty_id">Контрагент:</label>
+        <select name="counterparty_id" required>
+            {% for counterparty in counterparties %}
+            <option value="{{ counterparty.id }}">{{ counterparty.name }}</option>
+            {% endfor %}
+        </select><br>
+
+        <label for="agreement_id">Соглашение:</label>
+        <select name="agreement_id" required>
+            {% for agreement in agreements %}
+            <option value="{{ agreement.id }}">{{ agreement.contract_number }}</option>
+            {% endfor %}
+        </select><br>
+
+        <button type="submit">Создать</button>
+    </form>
+</body>
+</html>
