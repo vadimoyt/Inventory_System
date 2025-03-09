@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, Form, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-from backend.models import Manufacturer, Counterparty
+from backend.models import Manufacturer, Counterparty, Agreement
 from backend.database import get_db
 
 app = FastAPI()
@@ -11,10 +11,9 @@ templates = Jinja2Templates(directory="templates")
 
 
 @app.get("/manufacturer")
-async def manufacturer(request: Request, db: Session = Depends(get_db)):
+async def get_manufacturer(request: Request, db: Session = Depends(get_db)):
     manufacturers = db.query(Manufacturer).all()
-    return templates.TemplateResponse("manufacturers.html",
-                                     {"request": request, "manufacturers": manufacturers})
+    return templates.TemplateResponse("manufacturers.html", {"request": request, "manufacturers": manufacturers})
 
 
 @app.get("/manufacturer/create")
@@ -23,10 +22,14 @@ async def create_manufacturer(request: Request):
 
 
 @app.post("/manufacturer/create")
-async def create_manufacturer_post(name: str = Form(...), address: str = Form(...),
-                                   manager: str = Form(...), phone_number: str = Form(...),
+async def create_manufacturer_post(name: str = Form(...),
+                                   address: str = Form(...),
+                                   manager: str = Form(...),
+                                   phone_number: str = Form(...),
                                    db: Session = Depends(get_db)):
-    new_manufacturer = Manufacturer(name=name, address=address, manager=manager, phone_number=phone_number)
+    new_manufacturer = Manufacturer(
+        name=name, address=address, manager=manager, phone_number=phone_number
+    )
     db.add(new_manufacturer)
     db.commit()
     return RedirectResponse(url="/manufacturer", status_code=303)
@@ -37,8 +40,7 @@ async def edit_manufacturer(request: Request, manufacturer_id: int, db: Session 
     manufacturer = db.query(Manufacturer).filter(Manufacturer.id == manufacturer_id).first()
     if manufacturer is None:
         raise HTTPException(status_code=404, detail="Manufacturer not found")
-    return templates.TemplateResponse("edit_manufacturer.html",
-                                     {"request": request, "manufacturer": manufacturer})
+    return templates.TemplateResponse("edit_manufacturer.html", {"request": request, "manufacturer": manufacturer})
 
 
 @app.post("/manufacturer/edit/{manufacturer_id}")
@@ -67,8 +69,9 @@ async def delete_manufacturer(manufacturer_id: int, db: Session = Depends(get_db
     db.commit()
     return RedirectResponse(url="/manufacturer", status_code=303)
 
+
 @app.get("/counterparty")
-async def counterparty(request: Request, db: Session = Depends(get_db)):
+async def get_counterparty(request: Request, db: Session = Depends(get_db)):
     counterparties = db.query(Counterparty).all()
     return templates.TemplateResponse("counterparties.html", {"request": request, "counterparties": counterparties})
 
@@ -79,13 +82,13 @@ async def create_counterparty(request: Request):
 
 
 @app.post("/counterparty/create")
-async def create_counterparty_post(
-    name: str = Form(...),
-    address: str = Form(...),
-    phone_number: str = Form(...),
-    db: Session = Depends(get_db)
-):
-    new_counterparty = Counterparty(name=name, address=address, phone_number=phone_number)
+async def create_counterparty_post(name: str = Form(...),
+                                   address: str = Form(...),
+                                   phone_number: str = Form(...),
+                                   db: Session = Depends(get_db)):
+    new_counterparty = Counterparty(
+        name=name, address=address, phone_number=phone_number
+    )
     db.add(new_counterparty)
     db.commit()
     return RedirectResponse(url="/counterparty", status_code=303)
@@ -100,13 +103,8 @@ async def edit_counterparty(request: Request, counterparty_id: int, db: Session 
 
 
 @app.post("/counterparty/edit/{counterparty_id}")
-async def edit_counterparty_post(
-    counterparty_id: int,
-    name: str = Form(...),
-    address: str = Form(...),
-    phone_number: str = Form(...),
-    db: Session = Depends(get_db)
-):
+async def edit_counterparty_post(counterparty_id: int, name: str = Form(...), address: str = Form(...),
+                                  phone_number: str = Form(...), db: Session = Depends(get_db)):
     counterparty = db.query(Counterparty).filter(Counterparty.id == counterparty_id).first()
     if counterparty is None:
         raise HTTPException(status_code=404, detail="Counterparty not found")
@@ -127,3 +125,65 @@ async def delete_counterparty(counterparty_id: int, db: Session = Depends(get_db
     db.delete(counterparty)
     db.commit()
     return RedirectResponse(url="/counterparty", status_code=303)
+
+
+@app.get("/agreement")
+async def get_agreement(request: Request, db: Session = Depends(get_db)):
+    agreements = db.query(Agreement).all()
+    return templates.TemplateResponse("agreements.html", {"request": request, "agreements": agreements})
+
+
+@app.get("/agreement/create")
+async def create_agreement(request: Request, db: Session = Depends(get_db)):
+    counterparties = db.query(Counterparty).all()
+    return templates.TemplateResponse("create_agreement.html", {"request": request, "counterparties": counterparties})
+
+
+@app.post("/agreement/create")
+async def create_agreement_post(contract_number: str = Form(...),
+                                date_signed: str = Form(...),
+                                counterparty_id: int = Form(...),
+                                db: Session = Depends(get_db)):
+    new_agreement = Agreement(
+        contract_number=contract_number,
+        date_signed=date_signed,
+        counterparty_id=counterparty_id
+    )
+    db.add(new_agreement)
+    db.commit()
+    return RedirectResponse(url="/agreement", status_code=303)
+
+
+@app.get("/agreement/edit/{agreement_id}")
+async def edit_agreement(request: Request, agreement_id: int, db: Session = Depends(get_db)):
+    agreement = db.query(Agreement).filter(Agreement.id == agreement_id).first()
+    if agreement is None:
+        raise HTTPException(status_code=404, detail="Agreement not found")
+    counterparties = db.query(Counterparty).all()
+    return templates.TemplateResponse("edit_agreement.html", {"request": request, "agreement": agreement, "counterparties": counterparties})
+
+
+@app.post("/agreement/edit/{agreement_id}")
+async def edit_agreement_post(agreement_id: int, contract_number: str = Form(...),
+                               date_signed: str = Form(...), counterparty_id: int = Form(...),
+                               db: Session = Depends(get_db)):
+    agreement = db.query(Agreement).filter(Agreement.id == agreement_id).first()
+    if agreement is None:
+        raise HTTPException(status_code=404, detail="Agreement not found")
+
+    agreement.contract_number = contract_number
+    agreement.date_signed = date_signed
+    agreement.counterparty_id = counterparty_id
+    db.commit()
+    return RedirectResponse(url="/agreement", status_code=303)
+
+
+@app.get("/agreement/delete/{agreement_id}")
+async def delete_agreement(agreement_id: int, db: Session = Depends(get_db)):
+    agreement = db.query(Agreement).filter(Agreement.id == agreement_id).first()
+    if agreement is None:
+        raise HTTPException(status_code=404, detail="Agreement not found")
+
+    db.delete(agreement)
+    db.commit()
+    return RedirectResponse(url="/agreement", status_code=303)
