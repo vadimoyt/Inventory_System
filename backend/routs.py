@@ -1,8 +1,10 @@
+from itertools import product
+
 from fastapi import FastAPI, Depends, Form, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-from backend.models import Manufacturer, Counterparty, Agreement, Product, Sale
+from backend.models import Manufacturer, Counterparty, Agreement, Product, Sale, Stock
 from backend.database import get_db
 
 app = FastAPI()
@@ -276,7 +278,6 @@ async def delete_product(product_id: int, db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Товар не найден")
-
     db.delete(product)
     db.commit()
     return RedirectResponse(url="/product", status_code=303)
@@ -296,15 +297,20 @@ async def create_sale(request: Request, db: Session = Depends(get_db)):
 
 @app.post("/sale/create")
 async def create_sale_post(product_id: int = Form(...), quantity: int = Form(...), db: Session = Depends(get_db)):
+    product_on_stock = db.query(Stock).filter(Stock.product_id == product_id).first()
+    if not product_on_stock:
+        raise HTTPException(status_code=404, detail="Product not found in stock")
+    if product_on_stock.quantity < quantity:
+        raise HTTPException(status_code=400, detail="Not enough stock available")
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
-
     total_price = product.price * quantity
     new_sale = Sale(product_id=product_id, quantity=quantity, total_price=total_price)
-
+    product_on_stock.quantity -= quantity
     db.add(new_sale)
     db.commit()
+    db.refresh(product_on_stock)
     return RedirectResponse(url="/sales", status_code=303)
 
 
@@ -313,7 +319,6 @@ async def edit_sale(request: Request, sale_id: int, db: Session = Depends(get_db
     sale = db.query(Sale).filter(Sale.id == sale_id).first()
     if sale is None:
         raise HTTPException(status_code=404, detail="Sale not found")
-
     products = db.query(Product).all()
     return templates.TemplateResponse("edit_sale.html", {"request": request, "sale": sale, "products": products})
 
@@ -324,18 +329,27 @@ async def edit_sale_post(sale_id: int, product_id: int = Form(...), quantity: in
     sale = db.query(Sale).filter(Sale.id == sale_id).first()
     if sale is None:
         raise HTTPException(status_code=404, detail="Sale not found")
-
-    product = db.query(Product).filter(Product.id == product_id).first()
-    if not product:
-        raise HTTPException(status_code=404, detail="Product not found")
-
-    total_price = product.price * quantity
-
+    old_product_on_stock = db.query(Stock).filter(Stock.product_id == sale.product_id).first()
+    new_product_on_stock = db.query(Stock).filter(Stock.product_id == product_id).first()
+    if not new_product_on_stock:
+        raise HTTPException(status_code=404, detail="New product not found in stock")
+    quantity_difference = quantity - sale.quantity
+    if quantity_difference > 0 and new_product_on_stock.quantity < quantity_difference:
+        raise HTTPException(status_code=400, detail="Not enough stock available for new product")
+    old_product_on_stock.quantity += sale.quantity
+    if quantity_difference > 0:
+        new_product_on_stock.quantity -= quantity_difference
+    if quantity_difference < 0:
+        old_product_on_stock.quantity += abs(quantity_difference)
+    new_product = db.query(Product).filter(Product.id == product_id).first()
+    total_price = new_product.price * quantity
     sale.product_id = product_id
     sale.quantity = quantity
     sale.total_price = total_price
-
     db.commit()
+    db.refresh(old_product_on_stock)
+    db.refresh(new_product_on_stock)
+    db.refresh(sale)
     return RedirectResponse(url="/sales", status_code=303)
 
 
@@ -344,7 +358,75 @@ async def delete_sale(sale_id: int, db: Session = Depends(get_db)):
     sale = db.query(Sale).filter(Sale.id == sale_id).first()
     if sale is None:
         raise HTTPException(status_code=404, detail="Sale not found")
-
+    product_on_stock = db.query(Stock).filter(Stock.product_id == sale.product_id).first()
+    if product_on_stock is None:
+        raise HTTPException(status_code=404, detail="Product not found in stock")
+    product_on_stock.quantity += sale.quantity
     db.delete(sale)
     db.commit()
     return RedirectResponse(url="/sales", status_code=303)
+
+
+@app.get("/stocks")
+async def get_stocks(request: Request, db: Session = Depends(get_db)):
+    stocks = db.query(Stock).all()
+    return templates.TemplateResponse("stocks.html", {"request": request, "stocks": stocks})
+
+
+@app.get("/stock/create")
+async def create_stock(request: Request, db: Session = Depends(get_db)):
+    products = db.query(Product).all()
+    return templates.TemplateResponse("create_stock.html", {"request": request, "products": products})
+
+
+@app.post("/stock/create")
+async def create_stock_post(
+        product_id: int = Form(...),
+        quantity: int = Form(...),
+        db: Session = Depends(get_db)
+):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Товар не найден")
+    stock = db.query(Stock).filter(Stock.product_id == product_id).first()
+    if stock:
+        stock.quantity += quantity
+    else:
+        new_stock = Stock(product_id=product_id, quantity=quantity)
+        db.add(new_stock)
+    db.commit()
+    return RedirectResponse(url="/stocks", status_code=303)
+
+
+@app.get("/stock/edit/{stock_id}")
+async def edit_stock(request: Request, stock_id: int, db: Session = Depends(get_db)):
+    stock = db.query(Stock).filter(Stock.id == stock_id).first()
+    if stock is None:
+        raise HTTPException(status_code=404, detail="Товар на складе не найден")
+    products = db.query(Product).all()
+    return templates.TemplateResponse("edit_stock.html", {"request": request, "stock": stock, "products": products})
+
+
+@app.post("/stock/edit/{stock_id}")
+async def edit_stock_post(stock_id: int, product_id: int = Form(...), quantity: int = Form(...),
+                          db: Session = Depends(get_db)):
+    stock = db.query(Stock).filter(Stock.id == stock_id).first()
+    if stock is None:
+        raise HTTPException(status_code=404, detail="Товар на складе не найден")
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Товар не найден")
+    stock.product_id = product_id
+    stock.quantity = quantity
+    db.commit()
+    return RedirectResponse(url="/stocks", status_code=303)
+
+
+@app.get("/stock/delete/{stock_id}")
+async def delete_stock(stock_id: int, db: Session = Depends(get_db)):
+    stock = db.query(Stock).filter(Stock.id == stock_id).first()
+    if stock is None:
+        raise HTTPException(status_code=404, detail="Товар на складе не найден")
+    db.delete(stock)
+    db.commit()
+    return RedirectResponse(url="/stocks", status_code=303)
