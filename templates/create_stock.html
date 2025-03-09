@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавить товар на склад</title>
+</head>
+<body>
+    <h1>Добавить товар на склад</h1>
+    <form action="/stock/create" method="post">
+        <label for="product_id">Выберите товар:</label>
+        <select name="product_id" id="product_id">
+            {% for product in products %}
+                <option value="{{ product.id }}">{{ product.name }}</option>
+            {% endfor %}
+        </select>
+        <br><br>
+        <label for="quantity">Количество:</label>
+        <input type="number" name="quantity" id="quantity" required>
+        <br><br>
+        <button type="submit">Добавить</button>
+    </form>
+    <a href="/stocks">Назад</a>
+</body>
+</html>
