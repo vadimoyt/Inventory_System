@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавить контрагента</title>
+</head>
+<body>
+    <h1>Добавить нового контрагента</h1>
+    <form method="POST" action="/counterparty/create">
+        <label for="name">Name</label>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="address">Address</label>
+        <input type="text" id="address" name="address" required><br><br>
+
+        <label for="phone_number">Phone Number</label>
+        <input type="text" id="phone_number" name="phone_number" required><br><br>
+
+        <button type="submit">CДобавить контрагента</button>
+    </form>
+    <a href="/counterparty">Вернуться к списку контрагентов</a>
+</body>
+</html>

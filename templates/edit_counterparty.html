@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактировать контрагента</title>
+</head>
+<body>
+    <h1>Редактировать контрагента</h1>
+    <form method="POST" action="/counterparty/edit/{{ counterparty.id }}">
+        <label for="name">Наименование</label>
+        <input type="text" id="name" name="name" value="{{ counterparty.name }}" required><br><br>
+
+        <label for="address">Адресс</label>
+        <input type="text" id="address" name="address" value="{{ counterparty.address }}" required><br><br>
+
+        <label for="phone_number">Номер телефона</label>
+        <input type="text" id="phone_number" name="phone_number" value="{{ counterparty.phone_number }}" required><br><br>
+
+        <button type="submit">Сохранить изменения</button>
+    </form>
+    <a href="/counterparty">Вернуться к списку контрагентов</a>
+</body>
+</html>
