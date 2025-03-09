@@ -1,0 +1,27 @@
+    <!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создать нового производителя</title>
+</head>
+<body>
+    <h1>Создать нового производителя</h1>
+    <form action="/manufacturer/create" method="post">
+        <label for="name">Название:</label><br>
+        <input type="text" id="name" name="name" required><br>
+
+        <label for="address">Адрес:</label><br>
+        <input type="text" id="address" name="address" required><br>
+
+        <label for="manager">Менеджер:</label><br>
+        <input type="text" id="manager" name="manager" required><br>
+
+        <label for="phone_number">Телефон:</label><br>
+        <input type="text" id="phone_number" name="phone_number" required><br>
+
+        <input type="submit" value="Создать">
+    </form>
+    <a href="/manufacturer">Вернуться к списку производителей</a>
+</body>
+</html>
