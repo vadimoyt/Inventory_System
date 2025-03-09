@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактировать производителя</title>
+</head>
+<body>
+    <h1>Редактировать производителя</h1>
+    <form action="/manufacturer/edit/{{ manufacturer.id }}" method="post">
+        <label for="name">Название:</label><br>
+        <input type="text" id="name" name="name" value="{{ manufacturer.name }}" required><br>
+
+        <label for="address">Адрес:</label><br>
+        <input type="text" id="address" name="address" value="{{ manufacturer.address }}" required><br>
+
+        <label for="manager">Менеджер:</label><br>
+        <input type="text" id="manager" name="manager" value="{{ manufacturer.manager }}" required><br>
+
+        <label for="phone_number">Телефон:</label><br>
+        <input type="text" id="phone_number" name="phone_number" value="{{ manufacturer.phone_number }}" required><br>
+
+        <input type="submit" value="Обновить">
+    </form>
+    <a href="/manufacturer">Вернуться к списку производителей</a>
+</body>
+</html>
