@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Agreement</title>
+</head>
+<body>
+    <h1>Редактировать договор</h1>
+    <form action="/agreement/edit/{{ agreement.id }}" method="post">
+        <label for="contract_number">Номер договора:</label>
+        <input type="text" id="contract_number" name="contract_number" value="{{ agreement.contract_number }}" required><br><br>
+
+        <label for="date_signed">Дата подписания:</label>
+        <input type="date" id="date_signed" name="date_signed" value="{{ agreement.date_signed }}" required><br><br>
+
+        <label for="counterparty_id">Контрагент:</label>
+        <select id="counterparty_id" name="counterparty_id">
+            {% for counterparty in counterparties %}
+                <option value="{{ counterparty.id }}" {% if counterparty.id == agreement.counterparty_id %}selected{% endif %}>{{ counterparty.name }}</option>
+            {% endfor %}
+        </select><br><br>
+
+        <button type="submit">Обновить договор</button>
+    </form>
+</body>
+</html>
