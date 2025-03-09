@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, Form, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-from backend.models import Manufacturer, Counterparty, Agreement, Product
+from backend.models import Manufacturer, Counterparty, Agreement, Product, Sale
 from backend.database import get_db
 
 app = FastAPI()
@@ -280,3 +280,71 @@ async def delete_product(product_id: int, db: Session = Depends(get_db)):
     db.delete(product)
     db.commit()
     return RedirectResponse(url="/product", status_code=303)
+
+
+@app.get("/sales")
+async def get_sales(request: Request, db: Session = Depends(get_db)):
+    sales = db.query(Sale).all()
+    return templates.TemplateResponse("sales.html", {"request": request, "sales": sales})
+
+
+@app.get("/sale/create")
+async def create_sale(request: Request, db: Session = Depends(get_db)):
+    products = db.query(Product).all()
+    return templates.TemplateResponse("create_sale.html", {"request": request, "products": products})
+
+
+@app.post("/sale/create")
+async def create_sale_post(product_id: int = Form(...), quantity: int = Form(...), db: Session = Depends(get_db)):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    total_price = product.price * quantity
+    new_sale = Sale(product_id=product_id, quantity=quantity, total_price=total_price)
+
+    db.add(new_sale)
+    db.commit()
+    return RedirectResponse(url="/sales", status_code=303)
+
+
+@app.get("/sale/edit/{sale_id}")
+async def edit_sale(request: Request, sale_id: int, db: Session = Depends(get_db)):
+    sale = db.query(Sale).filter(Sale.id == sale_id).first()
+    if sale is None:
+        raise HTTPException(status_code=404, detail="Sale not found")
+
+    products = db.query(Product).all()
+    return templates.TemplateResponse("edit_sale.html", {"request": request, "sale": sale, "products": products})
+
+
+@app.post("/sale/edit/{sale_id}")
+async def edit_sale_post(sale_id: int, product_id: int = Form(...), quantity: int = Form(...),
+                         db: Session = Depends(get_db)):
+    sale = db.query(Sale).filter(Sale.id == sale_id).first()
+    if sale is None:
+        raise HTTPException(status_code=404, detail="Sale not found")
+
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    total_price = product.price * quantity
+
+    sale.product_id = product_id
+    sale.quantity = quantity
+    sale.total_price = total_price
+
+    db.commit()
+    return RedirectResponse(url="/sales", status_code=303)
+
+
+@app.get("/sale/delete/{sale_id}")
+async def delete_sale(sale_id: int, db: Session = Depends(get_db)):
+    sale = db.query(Sale).filter(Sale.id == sale_id).first()
+    if sale is None:
+        raise HTTPException(status_code=404, detail="Sale not found")
+
+    db.delete(sale)
+    db.commit()
+    return RedirectResponse(url="/sales", status_code=303)

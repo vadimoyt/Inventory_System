@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактировать продажу</title>
+</head>
+<body>
+    <h1>Редактировать продажу</h1>
+    <form action="/sale/edit/{{ sale.id }}" method="post">
+        <label for="product_id">Продукт:</label>
+        <select name="product_id" id="product_id" required>
+            {% for product in products %}
+            <option value="{{ product.id }}" {% if product.id == sale.product_id %}selected{% endif %}>{{ product.name }} - ${{ product.price }}</option>
+            {% endfor %}
+        </select>
+        <br><br>
+
+        <label for="quantity">Количество:</label>
+        <input type="number" name="quantity" id="quantity" value="{{ sale.quantity }}" required>
+        <br><br>
+
+        <button type="submit">Save Changes</button>
+    </form>
+</body>
+</html>
