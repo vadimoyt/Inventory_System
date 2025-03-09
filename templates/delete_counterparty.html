@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Counterparty</title>
+</head>
+<body>
+    <h1>Вы действительно хотите удалить контрагента</h1>
+    <p>Наименование: {{ counterparty.name }}</p>
+    <p>Адресс: {{ counterparty.address }}</p>
+    <p>Номер телефона Number: {{ counterparty.phone_number }}</p>
+
+    <form method="POST" action="/counterparty/delete/{{ counterparty.id }}">
+        <button type="submit">Да, удалить</button>
+    </form>
+    <a href="/counterparty">Назад</a>
+</body>
+</html>

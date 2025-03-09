@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, Form, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-from backend.models import Manufacturer
+from backend.models import Manufacturer, Counterparty
 from backend.database import get_db
 
 app = FastAPI()
@@ -66,3 +66,64 @@ async def delete_manufacturer(manufacturer_id: int, db: Session = Depends(get_db
     db.delete(manufacturer)
     db.commit()
     return RedirectResponse(url="/manufacturer", status_code=303)
+
+@app.get("/counterparty")
+async def counterparty(request: Request, db: Session = Depends(get_db)):
+    counterparties = db.query(Counterparty).all()
+    return templates.TemplateResponse("counterparties.html", {"request": request, "counterparties": counterparties})
+
+
+@app.get("/counterparty/create")
+async def create_counterparty(request: Request):
+    return templates.TemplateResponse("create_counterparty.html", {"request": request})
+
+
+@app.post("/counterparty/create")
+async def create_counterparty_post(
+    name: str = Form(...),
+    address: str = Form(...),
+    phone_number: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    new_counterparty = Counterparty(name=name, address=address, phone_number=phone_number)
+    db.add(new_counterparty)
+    db.commit()
+    return RedirectResponse(url="/counterparty", status_code=303)
+
+
+@app.get("/counterparty/edit/{counterparty_id}")
+async def edit_counterparty(request: Request, counterparty_id: int, db: Session = Depends(get_db)):
+    counterparty = db.query(Counterparty).filter(Counterparty.id == counterparty_id).first()
+    if counterparty is None:
+        raise HTTPException(status_code=404, detail="Counterparty not found")
+    return templates.TemplateResponse("edit_counterparty.html", {"request": request, "counterparty": counterparty})
+
+
+@app.post("/counterparty/edit/{counterparty_id}")
+async def edit_counterparty_post(
+    counterparty_id: int,
+    name: str = Form(...),
+    address: str = Form(...),
+    phone_number: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    counterparty = db.query(Counterparty).filter(Counterparty.id == counterparty_id).first()
+    if counterparty is None:
+        raise HTTPException(status_code=404, detail="Counterparty not found")
+
+    counterparty.name = name
+    counterparty.address = address
+    counterparty.phone_number = phone_number
+    db.commit()
+    return RedirectResponse(url="/counterparty", status_code=303)
+
+
+@app.get("/counterparty/delete/{counterparty_id}")
+async def delete_counterparty(counterparty_id: int, db: Session = Depends(get_db)):
+    counterparty = db.query(Counterparty).filter(Counterparty.id == counterparty_id).first()
+    if counterparty is None:
+        raise HTTPException(status_code=404, detail="Counterparty not found")
+
+    db.delete(counterparty)
+    db.commit()
+    return RedirectResponse(url="/counterparty", status_code=303)
