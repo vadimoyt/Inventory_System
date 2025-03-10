@@ -1,11 +1,11 @@
-from itertools import product
-
 from fastapi import FastAPI, Depends, Form, HTTPException, Request
-from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from backend.models import Manufacturer, Counterparty, Agreement, Product, Sale, Stock
+from pydantic import BaseModel, EmailStr
+from backend.auth import hash_password
 from backend.database import get_db
+from backend.models import Manufacturer, Counterparty, Agreement, Product, Sale, Stock, User
 
 app = FastAPI()
 
@@ -430,3 +430,41 @@ async def delete_stock(stock_id: int, db: Session = Depends(get_db)):
     db.delete(stock)
     db.commit()
     return RedirectResponse(url="/stocks", status_code=303)
+
+
+
+@app.get("/")
+async def read_root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+
+class UserCreate(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+
+@app.get("/register")
+def show_register_form(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
+
+@app.post("/register")
+def register(
+    username: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    if db.query(User).filter(User.username == username).first():
+        raise HTTPException(status_code=400, detail="Username already exists")
+
+    new_user = User(
+        username=username,
+        email=email,
+        hashed_password=hash_password(password)
+    )
+    db.add(new_user)
+    db.commit()
+
+    # Перенаправляем пользователя на страницу со списком всех пользователей
+    return RedirectResponse(url="/", status_code=303)
+
