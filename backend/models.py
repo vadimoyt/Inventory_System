@@ -99,3 +99,16 @@ class Stock(Base):
 
     def __repr__(self):
         return f"<Stock(id={self.id}, product_id={self.product_id}, quantity={self.quantity})>"
+
+
+class User(Base):
+
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String, unique=True, index=True)
+    email = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+
+    def __repr__(self):
+        return f"{self.username}, email - {self.email}"
