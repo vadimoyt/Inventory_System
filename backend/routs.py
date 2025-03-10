@@ -456,7 +456,6 @@ def register(
 ):
     if db.query(User).filter(User.username == username).first():
         raise HTTPException(status_code=400, detail="Username already exists")
-
     new_user = User(
         username=username,
         email=email,
@@ -464,7 +463,5 @@ def register(
     )
     db.add(new_user)
     db.commit()
-
-    # Перенаправляем пользователя на страницу со списком всех пользователей
     return RedirectResponse(url="/", status_code=303)
 
