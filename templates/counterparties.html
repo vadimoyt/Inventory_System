@@ -6,7 +6,7 @@
     <title>Контрагенты</title>
 </head>
 <body>
-    <h1>Counterparties</h1>
+    <h1>Контрагенты</h1>
     <a href="/counterparty/create">Добавить нового контрагента</a>
     <table>
         <thead>
@@ -29,6 +29,7 @@
                     <a href="/counterparty/edit/{{ counterparty.id }}">Редактировать</a>
                     <a href="/counterparty/delete/{{ counterparty.id }}">Удалить</a>
                 </td>
+                <button onclick="window.location.href='/'">На главную</button>
             </tr>
             {% endfor %}
         </tbody>
