@@ -78,7 +78,8 @@ async def login(
     result = await db.execute(select(User).filter(User.username == username))
     user = result.scalar_one_or_none()
     if not user or not verify_password(password, user.hashed_password):
-        raise InvalidCredentialsException
+        response = RedirectResponse(url="/login?error=1", status_code=303)
+        return response
     access_token = manager.create_access_token(data={"sub": user.username})
     response = RedirectResponse(url="/", status_code=303)
     manager.set_cookie(response, access_token)
