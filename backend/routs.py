@@ -42,7 +42,11 @@ app = FastAPI(
 )
 templates = Jinja2Templates(directory="templates")
 
-celery_app = Celery("tasks", broker="redis://127.0.0.1:6379/0")
+celery_app = Celery(
+    "your_project",
+    broker="redis://redis:6379/0",
+    backend="redis://redis:6379/0"
+)
 
 SECRET = os.getenv('SECRET_KEY', 'your-secret-key-here')
 manager = LoginManager(SECRET, token_url="/login", use_cookie=True, cookie_name="auth_token")

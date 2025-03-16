@@ -2,9 +2,7 @@
 .idea
 .env
 __pycache__
-alembic.ini
 env.py
 script.py.mako
-alembic.ini
 app.log
 dump.rdb
