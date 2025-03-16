@@ -101,6 +101,7 @@ class Stock(Base):
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     quantity = Column(Integer, nullable=False, default=0)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    minimum_quantity = Column(Integer, default=10)
 
     product = relationship("Product")
     user = relationship("User")
