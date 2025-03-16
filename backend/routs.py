@@ -10,6 +10,9 @@ from backend.auth import hash_password, verify_password
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
+from datetime import timedelta
+from jose import jwt, ExpiredSignatureError
+
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -26,19 +29,22 @@ async def load_user(username: str, db: AsyncSession = Depends(get_db)):
 async def get_current_user(request: Request, db: AsyncSession = Depends(get_db)):
     token = request.cookies.get("auth_token")
     if not token:
-        raise HTTPException(status_code=401, detail="No authentication token provided")
+        return RedirectResponse(url="/login", status_code=303)
     try:
-        from jose import jwt
         payload = jwt.decode(token, SECRET, algorithms=["HS256"])
         username = payload.get("sub")
         if not username:
-            raise HTTPException(status_code=401, detail="Invalid token: no username")
+            return RedirectResponse(url="/login", status_code=303)
         user = await load_user(username, db)
         if user is None:
-            raise HTTPException(status_code=401, detail="User not found")
+            return RedirectResponse(url="/login", status_code=303)
         return user
+    except ExpiredSignatureError:
+        response = RedirectResponse(url="/login", status_code=303)
+        response.delete_cookie("auth_token")
+        return response
     except Exception as e:
-        raise HTTPException(status_code=401, detail=f"Invalid authentication: {str(e)}")
+        return RedirectResponse(url="/login", status_code=303)
 
 @app.get("/")
 async def read_root(request: Request, user: User = Depends(get_current_user)):
@@ -81,7 +87,7 @@ async def login(
     if not user or not verify_password(password, user.hashed_password):
         response = RedirectResponse(url="/login?error=1", status_code=303)
         return response
-    access_token = manager.create_access_token(data={"sub": user.username})
+    access_token = manager.create_access_token(data={"sub": user.username}, expires=timedelta(hours=1))
     response = RedirectResponse(url="/", status_code=303)
     manager.set_cookie(response, access_token)
     return response
