@@ -203,15 +203,31 @@ async def create_manufacturer_post(
     await db.commit()
     return RedirectResponse(url="/manufacturer", status_code=303)
 
-@app.get("/manufacturer/edit/{manufacturer_id}", summary="Форма редактирования производителя", description="Отображает форму редактирования")
-async def edit_manufacturer(request: Request, manufacturer_id: int, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
-    result = await db.execute(select(Manufacturer).filter(Manufacturer.id == manufacturer_id, Manufacturer.user_id == user.id))
+@app.get(
+    "/manufacturer/edit/{manufacturer_id}",
+    summary="Форма редактирования производителя",
+    description="Отображает форму редактирования"
+)
+async def edit_manufacturer(
+        request: Request,
+        manufacturer_id: int,
+        db: AsyncSession = Depends(get_db),
+        user: User = Depends(get_current_user)
+):
+    result = await db.execute(
+        select(Manufacturer).
+        filter(Manufacturer.id == manufacturer_id, Manufacturer.user_id == user.id)
+    )
     manufacturer = result.scalar_one_or_none()
     if manufacturer is None:
         raise HTTPException(status_code=404, detail="Manufacturer not found or you don't have permission")
     return templates.TemplateResponse("edit_manufacturer.html", {"request": request, "manufacturer": manufacturer})
 
-@app.post("/manufacturer/edit/{manufacturer_id}", summary="Редактирование производителя", description="Обновляет данные производителя")
+@app.post(
+    "/manufacturer/edit/{manufacturer_id}",
+    summary="Редактирование производителя",
+    description="Обновляет данные производителя"
+)
 async def edit_manufacturer_post(
         manufacturer_id: int,
         name: str = Form(...),
@@ -221,7 +237,10 @@ async def edit_manufacturer_post(
         db: AsyncSession = Depends(get_db),
         user: User = Depends(get_current_user)
 ):
-    result = await db.execute(select(Manufacturer).filter(Manufacturer.id == manufacturer_id, Manufacturer.user_id == user.id))
+    result = await db.execute(
+        select(Manufacturer).
+        filter(Manufacturer.id == manufacturer_id, Manufacturer.user_id == user.id)
+    )
     manufacturer = result.scalar_one_or_none()
     if manufacturer is None:
         raise HTTPException(status_code=404, detail="Manufacturer not found or you don't have permission")
@@ -232,9 +251,20 @@ async def edit_manufacturer_post(
     await db.commit()
     return RedirectResponse(url="/manufacturer", status_code=303)
 
-@app.get("/manufacturer/delete/{manufacturer_id}", summary="Удаление производителя", description="Удаляет производителя")
-async def delete_manufacturer(manufacturer_id: int, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
-    result = await db.execute(select(Manufacturer).filter(Manufacturer.id == manufacturer_id, Manufacturer.user_id == user.id))
+@app.get(
+    "/manufacturer/delete/{manufacturer_id}",
+    summary="Удаление производителя",
+    description="Удаляет производителя"
+)
+async def delete_manufacturer(
+        manufacturer_id: int,
+        db: AsyncSession = Depends(get_db),
+        user: User = Depends(get_current_user)
+):
+    result = await db.execute(
+        select(Manufacturer).
+        filter(Manufacturer.id == manufacturer_id, Manufacturer.user_id == user.id)
+    )
     manufacturer = result.scalar_one_or_none()
     if manufacturer is None:
         raise HTTPException(status_code=404, detail="Manufacturer not found or you don't have permission")
@@ -242,8 +272,16 @@ async def delete_manufacturer(manufacturer_id: int, db: AsyncSession = Depends(g
     await db.commit()
     return RedirectResponse(url="/manufacturer", status_code=303)
 
-@app.get("/counterparty", summary="Список контрагентов", description="Отображает список контрагентов пользователя")
-async def get_counterparty(request: Request, db: AsyncSession = Depends(get_db), user: User = Depends(get_current_user)):
+@app.get(
+    "/counterparty",
+    summary="Список контрагентов",
+    description="Отображает список контрагентов пользователя"
+)
+async def get_counterparty(
+        request: Request,
+        db: AsyncSession = Depends(get_db),
+        user: User = Depends(get_current_user)
+):
     result = await db.execute(select(Counterparty).filter(Counterparty.user_id == user.id))
     counterparties = result.scalars().all()
     return templates.TemplateResponse("counterparties.html", {"request": request, "counterparties": counterparties})
@@ -738,7 +776,6 @@ async def generate_report(
         db: AsyncSession = Depends(get_db),
         user: User = Depends(get_current_user)
 ):
-    # Получаем данные о продажах
     result_sales = await db.execute(
         select(Sale)
         .filter(Sale.user_id == user.id)
@@ -748,7 +785,6 @@ async def generate_report(
     )
     sales = result_sales.scalars().all()
 
-    # Получаем данные об остатках
     result_stocks = await db.execute(
         select(Stock)
         .filter(Stock.user_id == user.id)
@@ -757,16 +793,9 @@ async def generate_report(
         )
     )
     stocks = result_stocks.scalars().all()
-
-    # Вычисляем общую сумму продаж
     total_sales = sum(sale.total_price for sale in sales)
-
-    # Вычисляем общее количество товаров на складе
     total_stock = sum(stock.quantity for stock in stocks)
-
-    # Форматируем текущую дату
     current_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
     return templates.TemplateResponse("report.html", {
         "request": request,
         "user": user,
