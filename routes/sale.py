@@ -13,7 +13,7 @@ import datetime
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
-@router.get("", summary="Список продаж")  # Fixed from "/s" to ""
+@router.get("", summary="Список продаж")
 async def get_sales(request: Request, db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
     result = await db.execute(select(Sale).filter(Sale.user_id == user.id))
     sales = result.scalars().all()

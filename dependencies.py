@@ -10,10 +10,9 @@ from passlib.context import CryptContext  # Add this for hashing
 from datetime import timedelta
 from jose import jwt, ExpiredSignatureError
 
-# Initialize password context for hashing
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Define authentication functions here
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
