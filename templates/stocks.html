@@ -7,7 +7,7 @@
 </head>
 <body>
     <h1>Склад товаров</h1>
-    <a href="/stock/create">Добавить новый товар на склад</a>
+    <a href="/stocks/create">Добавить новый товар на склад</a>
     <button onclick="window.location.href='/'">На главную</button>
     <table>
         <thead>
@@ -23,8 +23,8 @@
                 <td>{{ stock.product.name }}</td>
                 <td>{{ stock.quantity }}</td>
                 <td>
-                    <a href="/stock/edit/{{ stock.id }}">Редактировать</a>
-                    <a href="/stock/delete/{{ stock.id }}">Удалить</a>
+                    <a href="/stocks/edit/{{ stock.id }}">Редактировать</a>
+                    <a href="/stocks/delete/{{ stock.id }}">Удалить</a>
                 </td>
             </tr>
             {% endfor %}
