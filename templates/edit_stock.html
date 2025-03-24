@@ -7,7 +7,7 @@
 </head>
 <body>
     <h1>Редактировать товар на складе</h1>
-    <form action="/stock/edit/{{ stock.id }}" method="post">
+    <form action="/stocks/edit/{{ stock.id }}" method="post">
         <label for="product_id">Выберите товар:</label>
         <select name="product_id" id="product_id">
             {% for product in products %}

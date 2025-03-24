@@ -7,7 +7,7 @@
 </head>
 <body>
     <h1>Продажи</h1>
-    <a href="/sale/create">Добавить новую продажу</a>
+    <a href="/sales/create">Добавить новую продажу</a>
     <button onclick="window.location.href='/'">На главную</button>
     <table>
         <thead>
@@ -27,8 +27,8 @@
                 <td>{{ sale.total_price }}</td>
                 <td>{{ sale.date_sold }}</td>
                 <td>
-                    <a href="/sale/edit/{{ sale.id }}">Редактировать</a> |
-                    <a href="/sale/delete/{{ sale.id }}">Удалить</a>
+                    <a href="/sales/edit/{{ sale.id }}">Редактировать</a> |
+                    <a href="/sales/delete/{{ sale.id }}">Удалить</a>
                 </td>
             </tr>
             {% endfor %}
