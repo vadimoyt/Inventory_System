@@ -29,15 +29,21 @@ class AgreementUpdate(AgreementCreate):
 
 @router.get("")
 async def get_agreement(request: Request, db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
-    result = await db.execute(select(Agreement).filter(Agreement.user_id == user.id))
-    agreements = result.scalars().all()
-    return templates.TemplateResponse("agreements.html", {"request": request, "agreements": agreements})
+    try:
+        result = await db.execute(select(Agreement).filter(Agreement.user_id == user.id))
+        agreements = result.scalars().all()
+        return templates.TemplateResponse("agreements.html", {"request": request, "agreements": agreements})
+    except Exception as e:
+        return templates.TemplateResponse("error.html", {"request": request, "error": str(e)})
 
 @router.get("/create")
 async def create_agreement(request: Request, db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
-    result = await db.execute(select(Counterparty).filter(Counterparty.user_id == user.id))
-    counterparties = result.scalars().all()
-    return templates.TemplateResponse("create_agreement.html", {"request": request, "counterparties": counterparties})
+    try:
+        result = await db.execute(select(Counterparty).filter(Counterparty.user_id == user.id))
+        counterparties = result.scalars().all()
+        return templates.TemplateResponse("create_agreement.html", {"request": request, "counterparties": counterparties})
+    except Exception as e:
+        return templates.TemplateResponse("error.html", {"request": request, "error": str(e)})
 
 @router.post("/create")
 async def create_agreement_post(
@@ -47,29 +53,35 @@ async def create_agreement_post(
     db: AsyncSession = Depends(get_db),
     user=Depends(get_current_user)
 ):
-    agreement_data = AgreementCreate(contract_number=contract_number, date_signed=date_signed, counterparty_id=counterparty_id)
-    result = await db.execute(select(Counterparty).filter(Counterparty.id == agreement_data.counterparty_id, Counterparty.user_id == user.id))
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(status_code=403, detail="You don't have permission to use this counterparty")
-    new_agreement = Agreement(
-        contract_number=agreement_data.contract_number,
-        date_signed=agreement_data.date_signed,
-        counterparty_id=agreement_data.counterparty_id,
-        user_id=user.id
-    )
-    db.add(new_agreement)
-    await db.commit()
-    return RedirectResponse(url="/agreement", status_code=303)
+    try:
+        agreement_data = AgreementCreate(contract_number=contract_number, date_signed=date_signed, counterparty_id=counterparty_id)
+        result = await db.execute(select(Counterparty).filter(Counterparty.id == agreement_data.counterparty_id, Counterparty.user_id == user.id))
+        if result.scalar_one_or_none() is None:
+            raise HTTPException(status_code=403, detail="You don't have permission to use this counterparty")
+        new_agreement = Agreement(
+            contract_number=agreement_data.contract_number,
+            date_signed=agreement_data.date_signed,
+            counterparty_id=agreement_data.counterparty_id,
+            user_id=user.id
+        )
+        db.add(new_agreement)
+        await db.commit()
+        return RedirectResponse(url="/agreement", status_code=303)
+    except Exception as e:
+        return templates.TemplateResponse("error.html", {"request": Request, "error": str(e)})
 
 @router.get("/edit/{agreement_id}")
 async def edit_agreement(request: Request, agreement_id: int, db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
-    result = await db.execute(select(Agreement).filter(Agreement.id == agreement_id, Agreement.user_id == user.id))
-    agreement = result.scalar_one_or_none()
-    if agreement is None:
-        raise HTTPException(status_code=404, detail="Agreement not found or you don't have permission")
-    result_counterparties = await db.execute(select(Counterparty).filter(Counterparty.user_id == user.id))
-    counterparties = result_counterparties.scalars().all()
-    return templates.TemplateResponse("edit_agreement.html", {"request": request, "agreement": agreement, "counterparties": counterparties})
+    try:
+        result = await db.execute(select(Agreement).filter(Agreement.id == agreement_id, Agreement.user_id == user.id))
+        agreement = result.scalar_one_or_none()
+        if agreement is None:
+            raise HTTPException(status_code=404, detail="Agreement not found or you don't have permission")
+        result_counterparties = await db.execute(select(Counterparty).filter(Counterparty.user_id == user.id))
+        counterparties = result_counterparties.scalars().all()
+        return templates.TemplateResponse("edit_agreement.html", {"request": request, "agreement": agreement, "counterparties": counterparties})
+    except Exception as e:
+        return templates.TemplateResponse("error.html", {"request": request, "error": str(e)})
 
 @router.post("/edit/{agreement_id}")
 async def edit_agreement_post(
@@ -80,26 +92,32 @@ async def edit_agreement_post(
     db: AsyncSession = Depends(get_db),
     user=Depends(get_current_user)
 ):
-    agreement_data = AgreementUpdate(contract_number=contract_number, date_signed=date_signed, counterparty_id=counterparty_id)
-    result = await db.execute(select(Agreement).filter(Agreement.id == agreement_id, Agreement.user_id == user.id))
-    agreement = result.scalar_one_or_none()
-    if agreement is None:
-        raise HTTPException(status_code=404, detail="Agreement not found or you don't have permission")
-    result = await db.execute(select(Counterparty).filter(Counterparty.id == agreement_data.counterparty_id, Counterparty.user_id == user.id))
-    if result.scalar_one_or_none() is None:
-        raise HTTPException(status_code=403, detail="You don't have permission to use this counterparty")
-    agreement.contract_number = agreement_data.contract_number
-    agreement.date_signed = agreement_data.date_signed
-    agreement.counterparty_id = agreement_data.counterparty_id
-    await db.commit()
-    return RedirectResponse(url="/agreement", status_code=303)
+    try:
+        agreement_data = AgreementUpdate(contract_number=contract_number, date_signed=date_signed, counterparty_id=counterparty_id)
+        result = await db.execute(select(Agreement).filter(Agreement.id == agreement_id, Agreement.user_id == user.id))
+        agreement = result.scalar_one_or_none()
+        if agreement is None:
+            raise HTTPException(status_code=404, detail="Agreement not found or you don't have permission")
+        result = await db.execute(select(Counterparty).filter(Counterparty.id == agreement_data.counterparty_id, Counterparty.user_id == user.id))
+        if result.scalar_one_or_none() is None:
+            raise HTTPException(status_code=403, detail="You don't have permission to use this counterparty")
+        agreement.contract_number = agreement_data.contract_number
+        agreement.date_signed = agreement_data.date_signed
+        agreement.counterparty_id = agreement_data.counterparty_id
+        await db.commit()
+        return RedirectResponse(url="/agreement", status_code=303)
+    except Exception as e:
+        return templates.TemplateResponse("error.html", {"request": Request, "error": str(e)})
 
 @router.get("/delete/{agreement_id}")
 async def delete_agreement(agreement_id: int, db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
-    result = await db.execute(select(Agreement).filter(Agreement.id == agreement_id, Agreement.user_id == user.id))
-    agreement = result.scalar_one_or_none()
-    if agreement is None:
-        raise HTTPException(status_code=404, detail="Agreement not found or you don't have permission")
-    await db.delete(agreement)
-    await db.commit()
-    return RedirectResponse(url="/agreement", status_code=303)
+    try:
+        result = await db.execute(select(Agreement).filter(Agreement.id == agreement_id, Agreement.user_id == user.id))
+        agreement = result.scalar_one_or_none()
+        if agreement is None:
+            raise HTTPException(status_code=404, detail="Agreement not found or you don't have permission")
+        await db.delete(agreement)
+        await db.commit()
+        return RedirectResponse(url="/agreement", status_code=303)
+    except Exception as e:
+        return templates.TemplateResponse("error.html", {"request": Request, "error": str(e)})

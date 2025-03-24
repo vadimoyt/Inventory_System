@@ -12,7 +12,6 @@ app = FastAPI(
 )
 templates = Jinja2Templates(directory="templates")
 
-# Include routers
 app.include_router(auth.router, prefix="")
 app.include_router(manufacturer.router, prefix="/manufacturer")
 app.include_router(counterparty.router, prefix="/counterparty")
